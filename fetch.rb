@@ -33,65 +33,56 @@ module Spyglass
   end
 
   class Fetch
-    attr_reader :docker_registry, :docker_image, :docker_tag, :token
+    attr_reader :docker_registry, :docker_image, :docker_tag
 
     def initialize(args = {})
-      @docker_registry = ENV['DOCKER_REGISTRY'] || "https://docker-dev.groupondev.com"
-      @docker_image = ENV['DOCKER_IMAGE'] || "ie/titan"
-      @docker_tag = ENV['DOCKER_TAG'] || "v0.1"
+      @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY'] || "https://docker-dev.groupondev.com"
+      @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE'] || "ie/titan"
 
       check_args
+      raise "No tags found" if tags.empty?
+    end
 
-      @token = args[:token ] || get_token
+    def view(tag = nil)
+      @docker_tag = tag || tags.last
+      manifest = get_manifest
+      blobs = get_blobs(manifest)
+      mash(manifest, blobs)
+    end
 
-      @token ||= get_token
-#      puts @token
-
+    def diff
       # tags = get_most_recent_tags 
-      tags = get_tags
+      pp "tags #{tags}"
 
-      if tags.size == 1
-        pp "only 1 tag for the image in the registry: #{tags.first}"
-        @docker_tag = tags.first
-        manifest = get_manifest
-        blobs = get_blobs(manifest)
-        mashed = mash(manifest, blobs)
-        pp mashed
-      else
-        pp "tags #{tags}"
-        @docker_tag = tags[1]
-        @docker_tag = "2018.09.19_21.11_c9c66a4"
+      raise "only 1 tag for the image in the registry: #{tags.first}" if tags.size == 1
+      @docker_tag = tags[1]
 
-        # return get_most_recent_tags
-        manifest = get_manifest
-        blobs = get_blobs(manifest)
-        # pp @blobs
-        mashed = mash(manifest, blobs)
-        pp mashed
-        # pp mashed.keys
-        pp "==================== "
+      # return get_most_recent_tags
+      manifest = get_manifest
+      blobs = get_blobs(manifest)
+      # pp @blobs
+      mashed = mash(manifest, blobs)
+      pp mashed
+      # pp mashed.keys
+      pp "==================== "
 
-        @docker_tag = tags[0]
-        @docker_tag = "2018.09.20_22.37_a0f7663"
-        manifest = get_manifest
-        blobs = get_blobs(manifest)
-        mashed2 = mash(manifest, blobs)
-        pp mashed2
+      @docker_tag = tags[0]
+      manifest = get_manifest
+      blobs = get_blobs(manifest)
+      mashed2 = mash(manifest, blobs)
+      pp mashed2
 
-        pp "==================== "
+      pp "==================== "
 
-        # pp mashed2.keys
-        pp mashed2 - mashed
-      # rescue => e 
-      #   puts e
-      end
-
+      # pp mashed2.keys
+      pp mashed2 - mashed
+    # rescue => e
+    #   puts e
     end
 
     def check_args
       raise "missing DOCKER_REGISTRY" if docker_registry.nil?
       raise "missing docker_image" if docker_image.nil?
-      raise "missing docker_tag" if docker_tag.nil?
     end
 
     def https_get(url, headers = {})
@@ -126,7 +117,7 @@ module Spyglass
       res.each_header.to_h
     end
 
-    def get_token
+    def token
       @token ||= https_get("#{docker_registry}/v2/token")["token"]
     end
 
@@ -146,6 +137,10 @@ module Spyglass
         "Authorization" => "Bearer: #{token}"
       }
       https_get("#{docker_registry}/v2/#{docker_image}/blobs/#{config_digest}", headers)
+    end
+
+    def tags
+      @tags ||= get_tags
     end
 
     def get_tags
@@ -185,7 +180,8 @@ module Spyglass
           command["size"] = layer["size"]
           command["fake_id"] = layer["digest"]
         end
-        command["created_by"] = command["created_by"].sub("/bin/sh -c #(nop) ", "")
+        command["created_by"] = command["created_by"].sub("/bin/sh -c #(nop)", "").sub("/bin/sh -c", "RUN").strip
+        command["prefix"] = (command["created_by"] || "").split(" ").first
 
         command
       end
@@ -194,4 +190,4 @@ module Spyglass
   end
 end
 
-Spyglass::Fetch.new.get_token
+# Spyglass::Fetch.new.diff
