@@ -1,3 +1,7 @@
-View Image
 
-<%=image_mash%>
+
+<% layer_mash.each do |layer| %>
+  <div class="row">
+    <div class="col"><%= layer["created_by"] %></div>
+  </div>
+<% end %>

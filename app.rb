@@ -26,10 +26,10 @@ get '/image' do
   else
     fetcher = Spyglass::Fetch.new(docker_image: image)
     tags =fetcher.tags
-    image_mash = Spyglass::Fetch.new(docker_image: image).view
+    layer_mash = fetcher.view
   end
 
-  erb :"image/index", locals: {image_mash: image_mash, tags: tags}
+  erb :"image/index", locals: {layer_mash: layer_mash, tags: tags}
 end
 
 get '/tags/all' do
