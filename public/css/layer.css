@@ -1,0 +1,29 @@
+.list-group-item-ADD {
+  color: #000;
+  background-color: #d6d8db;
+}
+
+.list-group-item-CMD {
+  color: #000;
+  background-color: #f5c6cb;
+}
+
+.list-group-item-ENV {
+  color: #000;
+  background-color: #856404;
+}
+
+.list-group-item-RUN {
+  color: #000;
+  background-color: #c3e6cb;
+}
+
+.list-group-item-COPY {
+  color: #000;
+  background-color: #c3e6cb;
+}
+
+.list-group-item-WORKDIR {
+  color: #000;
+  background-color: #004085;
+}

@@ -5,7 +5,7 @@ require_relative "fetch"
 
 configure :production, :development do
   enable :logging
- enable :sessions
+  enable :sessions
 end
 
 helpers do
@@ -16,6 +16,10 @@ end
 
 get '/' do
   erb :index
+end
+
+get '/test' do
+  erb :test
 end
 
 get '/image' do

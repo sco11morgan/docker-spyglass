@@ -1,7 +1,7 @@
 
+<ul class="list-group">
+  <% layer_mash.each do |layer| %>
+    <li class="list-group-item list-group-item-<%= layer['prefix'] %>"><%= layer['created_by'] %></li>
+  <% end %>
+</ul>
 
-<% layer_mash.each do |layer| %>
-  <div class="row">
-    <div class="col"><%= layer["created_by"] %></div>
-  </div>
-<% end %>
