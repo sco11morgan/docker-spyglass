@@ -24,7 +24,7 @@ module Spyglass
 
     def initialize(args = {})
       @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY'] || "https://docker-dev.groupondev.com"
-      @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE'] || "ie/titan"
+      @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE'] || "janus/visitsbycountry" || "ie/titan"
       @username = args[:username] || ENV['DOCKER_USERNAME'] 
       @password = args[:password] || ENV['DOCKER_PASSWORD'] 
       pp docker_image
@@ -98,7 +98,6 @@ module Spyglass
     end
 
     def get_manifest(docker_tag)
-      pp docker_tag
       raise "Tag is nil" if docker_tag.nil?
 
 

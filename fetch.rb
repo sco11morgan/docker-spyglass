@@ -42,6 +42,7 @@ module Spyglass
     end
 
     def view(tag = nil)
+      pp "==================== fetching tag: #{tag}"
       manifest = docker_client.get_manifest(tag || tags.last)
       blobs = docker_client.get_blobs(manifest)
       mash(manifest, blobs)
@@ -53,30 +54,47 @@ module Spyglass
 
       raise "only 1 tag for the image in the registry: #{tags.first}" if tags.size == 1
 
-      # return get_most_recent_tags
-      manifest = docker_client.get_manifest(tags[1])
-      blobs = docker_client.get_blobs(manifest)
-      # pp @blobs
-      mashed = mash(manifest, blobs)
-      pp mashed
+      mashed = view(tags[1])
+      # pp mashed
       # pp mashed.keys
-      pp "==================== "
 
-      manifest = docker_client.get_manifest(tags[0])
-      blobs = docker_client.get_blobs(manifest)
-      mashed2 = mash(manifest, blobs)
-      pp mashed2
-
-      pp "==================== "
-
+      mashed2 = view(tags[0])
+      # pp mashed2
       # pp mashed2.keys
+      pp "==================== comparing #{tags[1]} to #{tags[0]}"
+      raise "same image" if mashed2.last["created"] ==  mashed.last["created"]
       pp mashed2 - mashed
     # rescue => e
     #   puts e
     end
 
+    def score(tag1 = tags[1], tag2 = tags[0])
+      pp tags
+      mashed = view(tag1)
+      image1_size = mashed.inject(0) {|sum, command| command["size"] + sum }
+      # pp mashed
+      # pp mashed.keys
+
+      mashed2 = view(tag2)
+      image2_size = mashed2.inject(0) {|sum, command| command["size"] + sum }
+
+      diff = mashed2 - mashed
+      diff_size = diff.inject(0) {|sum, command| command["size"] + sum }
+
+      result = {
+        image1_size: image1_size,
+        image2_size: image2_size,
+        gain: image2_size - image1_size,
+        diff_size: diff_size,
+        percent_reuse: (100 - (diff_size.to_f / image2_size) * 100)
+      }
+
+      pp result
+      result
+    end
+
     def tags
-      @tags ||= docker_client.get_tags
+      @tags ||= docker_client.get_tags.reverse
     end
 
     def mash(manifest, blobs)
@@ -102,7 +120,7 @@ module Spyglass
 
   end
 end
-
-# Spyglass::Fetch.new.diff
+ # Spyglass::Fetch.new.score("2018.10.08-17.15.39-73b3b46", "2018.10.08-18.44.21-0dc52a4")
+ Spyglass::Fetch.new.score
 # Spyglass::Fetch.new.view("latest")
-pp Spyglass::Fetch.new.view("latest")
+# pp Spyglass::Fetch.new.view("latest")
