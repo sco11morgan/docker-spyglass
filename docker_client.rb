@@ -125,20 +125,13 @@ module Spyglass
       https_get("#{docker_registry}/v2/#{docker_image}/tags/list", headers)["tags"]
     end
 
-    def get_most_recent_tags(size = 3)
-      tags = get_tags
-
+    def get_tag_timestamp(tag)
       headers = {
         "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
         "Authorization" => "Bearer: #{token}"
       }
-
-      tag_map = tags.map do |tag|
-        last_modified = https_head("#{docker_registry}/v2/#{docker_image}/manifests/#{tag}", headers)["last-modified"]
-        [tag, DateTime.parse(last_modified)]
-      end.to_h
-
-      tag_map.sort_by {|k,v| v}.reverse.map { |x| x.first }.take(size)
+      last_modified = https_head("#{docker_registry}/v2/#{docker_image}/manifests/#{tag}", headers)["last-modified"]
+      DateTime.parse(last_modified)
     end
   end
 end

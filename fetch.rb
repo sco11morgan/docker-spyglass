@@ -4,6 +4,7 @@ require 'net/http'
 require 'net/https'
 require 'json'
 require 'pp'
+require_relative 'cache'
 require_relative 'docker_client'
 
 class Hash
@@ -69,19 +70,19 @@ module Spyglass
     end
 
     def score(tag1 = tags[1], tag2 = tags[0])
-      pp tags
       mashed = view(tag1)
       image1_size = mashed.inject(0) {|sum, command| command["size"] + sum }
-      # pp mashed
-      # pp mashed.keys
 
       mashed2 = view(tag2)
       image2_size = mashed2.inject(0) {|sum, command| command["size"] + sum }
 
       diff = mashed2 - mashed
+      # pp diff
       diff_size = diff.inject(0) {|sum, command| command["size"] + sum }
 
       result = {
+        tag1: tag1,
+        tag2: tag2,
         image1_size: image1_size,
         image2_size: image2_size,
         gain: image2_size - image1_size,
@@ -91,6 +92,15 @@ module Spyglass
 
       pp result
       result
+    end
+
+    def trend
+      get_most_recent_tags(5).each_cons(2) do |tag1, tag2|
+        score(tag1, tag2)
+      end
+      # tags.first(5).each_cons(2) do |tag1, tag2|
+      #   score(tag1, tag2)
+      # end
     end
 
     def tags
@@ -118,9 +128,26 @@ module Spyglass
       end
     end
 
+    def get_most_recent_tags(size = 3)
+      tag_map = tags.map do |tag|
+        timestamp = Cache.get("timestamp-#{tag}") do
+          docker_client.get_tag_timestamp(tag)
+        end
+
+        [tag, timestamp]
+      end.to_h
+
+      tag_map.sort_by {|k,v| v}.reverse.map { |x| x.first }.take(size)
+    end
+
   end
 end
  # Spyglass::Fetch.new.score("2018.10.08-17.15.39-73b3b46", "2018.10.08-18.44.21-0dc52a4")
- Spyglass::Fetch.new.score
+ # Spyglass::Fetch.new.score
+ pp Spyglass::Fetch.new.tags
+ pp Spyglass::Fetch.new.get_most_recent_tags
+  Spyglass::Fetch.new.trend
+   # Spyglass::Fetch.new.score("87d864ff718491bd67b65f3346d6007b-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
+
 # Spyglass::Fetch.new.view("latest")
 # pp Spyglass::Fetch.new.view("latest")
