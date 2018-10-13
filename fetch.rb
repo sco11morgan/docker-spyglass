@@ -1,7 +1,5 @@
 
 require 'date'
-require 'net/http'
-require 'net/https'
 require 'json'
 require 'pp'
 require_relative 'cache'
@@ -38,6 +36,16 @@ module Spyglass
 
     def initialize(args = {})
       @docker_client = DockerClient.new(args)
+
+      begin
+        @docker_client.token
+      rescue => e
+        pp "Error authenticating with Docker Registry: #{docker_client.docker_registry}"
+        # pp e
+        raise e
+      end
+
+      @docker_client
 
       raise "No tags found" if tags.empty?
     end
@@ -144,10 +152,16 @@ module Spyglass
 end
  # Spyglass::Fetch.new.score("2018.10.08-17.15.39-73b3b46", "2018.10.08-18.44.21-0dc52a4")
  # Spyglass::Fetch.new.score
+  # Spyglass::Fetch.new.docker_client.token
+#  begin
+#   Spyglass::Fetch.new.docker_client.token
+#  rescue => e
+#   pp e
+# end
  pp Spyglass::Fetch.new.tags
- pp Spyglass::Fetch.new.get_most_recent_tags
-  Spyglass::Fetch.new.trend
-   # Spyglass::Fetch.new.score("87d864ff718491bd67b65f3346d6007b-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
+ # pp Spyglass::Fetch.new.get_most_recent_tags
+  # Spyglass::Fetch.new.trend
+   # Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
 
 # Spyglass::Fetch.new.view("latest")
 # pp Spyglass::Fetch.new.view("latest")

@@ -1,7 +1,6 @@
 
 require 'date'
-require 'net/http'
-require 'net/https'
+require 'httpclient'
 require 'json'
 require 'pp'
 
@@ -23,6 +22,7 @@ module Spyglass
     attr_reader :docker_registry, :docker_image
 
     def initialize(args = {})
+      @client = HTTPClient.new
       @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY'] || "https://docker-dev.groupondev.com"
       @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE'] || "janus/visitsbycountry" || "ie/titan"
       @username = args[:username] || ENV['DOCKER_USERNAME'] 
@@ -39,103 +39,83 @@ module Spyglass
     end
 
     def https_get(url, headers = {})
-      uri = URI(url)
-      req = Net::HTTP::Get.new(uri)
-      headers.each do |k,v|
-        req[k] = v
-      end
+      res = @client.get(url, {}, headers)
 
-      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, verify_mode: OpenSSL::SSL::VERIFY_NONE) do |http|
-        http.request(req)
-      end
-
-      raise HttpError.new(res.code, res.message) if res.code != "200"
+      raise HttpError.new(res.status, res.body) if res.status != 200
 
       JSON.parse(res.body)
     end
 
     def https_head(url, headers = {})
-      uri = URI(url)
-      req = Net::HTTP::Head.new(uri)
-      headers.each do |k,v|
-        req[k] = v
-      end
+      res = @client.head(url, {}, headers)
 
-      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, verify_mode: OpenSSL::SSL::VERIFY_NONE) do |http|
-        http.request(req)
-      end
+      raise HttpError.new(res.status, res.body) if res.status != 200
 
-      raise HttpError.new(res.code, res.message) if res.code != "200"
-
-      res.each_header.to_h
+      res.headers
     end
 
-    def https_post(url, headers = {})
-      uri = URI(url)
-      req = Net::HTTP::Get.new(uri)
-      headers.each do |k,v|
-        req[k] = v
-      end
+    def https_post(url, options, headers = {})
+      res = @client.post(url, options, headers)
 
-      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, verify_mode: OpenSSL::SSL::VERIFY_NONE) do |http|
-        http.request(req)
-      end
-
-      raise HttpError.new(res.code, res.message) if res.code != "200"
+      raise HttpError.new(res.status, res.body) if res.status != 200
 
       JSON.parse(res.body)
     end
 
     def token
       if @token.nil?
-        # headers = {}
-        # headers.merge!({"username" => @username, "password" => @password}) if @username && @password
-        # @token = https_get("#{docker_registry}/v2/token", headers)["token"]
-        @token ||= https_get("#{docker_registry}/v2/token")["token"]
+        headers = {
+          'Accept' => 'application/json',
+        }
+        if @username && @password
+          @token ||= https_post("#{docker_registry}/v2/users/login", {"username" => @username, "password" => @password}, headers)["token"]
+        else
+          @token ||= https_get("#{docker_registry}/v2/token", headers)["token"]
+        end
       end
 
       @token
     end
 
+    def auth_header
+      headers = {
+        "Authorization" => "Bearer: #{token}"
+      }
+      # if @username && @password
+      #   headers = {
+      #     "Authorization" => "JWT: #{token}"
+      #   }
+      # else
+      #   headers = {
+      #     "Authorization" => "Bearer: #{token}"
+      #   }
+      # end
+    end
+
     def get_manifest(docker_tag)
       raise "Tag is nil" if docker_tag.nil?
 
-
-      uri = URI("#{docker_registry}/v2/#{docker_image}/manifests/#{docker_tag}")
-
-      headers = {
+      headers = auth_header.merge({
         "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
-        "Authorization" => "Bearer: #{token}"
-      }
+      })
       https_get("#{docker_registry}/v2/#{docker_image}/manifests/#{docker_tag}", headers)
     end
 
     def get_blobs(manifest)
       config_digest = manifest["config"]["digest"]
-      headers = {
-        "Authorization" => "Bearer: #{token}"
-      }
-      https_get("#{docker_registry}/v2/#{docker_image}/blobs/#{config_digest}", headers)
+      https_get("#{docker_registry}/v2/#{docker_image}/blobs/#{config_digest}", auth_header)
     end
 
     def get_tags
-      headers = {
-        "Authorization" => "Bearer: #{token}"
-      }
-      https_get("#{docker_registry}/v2/#{docker_image}/tags/list", headers)["tags"]
+      https_get("#{docker_registry}/v2/#{docker_image}/tags/list", auth_header)["tags"]
     end
 
     def get_tag_timestamp(tag)
-      headers = {
+      headers = auth_header.merge({
         "Accept" => "application/vnd.docker.distribution.manifest.v2+json",
-        "Authorization" => "Bearer: #{token}"
-      }
-      last_modified = https_head("#{docker_registry}/v2/#{docker_image}/manifests/#{tag}", headers)["last-modified"]
+      })
+      last_modified = https_head("#{docker_registry}/v2/#{docker_image}/manifests/#{tag}", headers)["Last-Modified"]
       DateTime.parse(last_modified)
     end
   end
 end
-
-# Spyglass::Fetch.new.diff
-# Spyglass::Fetch.new.view("latest")
-# Spyglass::Fetch.new.view("2.5")
