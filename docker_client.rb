@@ -68,7 +68,11 @@ module Spyglass
           'Accept' => 'application/json',
         }
         if @username && @password
+          @token ||= https_get("#{docker_registry}/v2/token", headers)["token"]
+          "https://auth.docker.io/token?scope=repository:$image:pull&service=registry.docker.io"
           @token ||= https_post("#{docker_registry}/v2/users/login", {"username" => @username, "password" => @password}, headers)["token"]
+        elsif @docker_registry == "https://registry-1.docker.io"
+          @token ||= https_get("https://auth.docker.io/token?scope=repository:#{@docker_image}:pull&service=registry.docker.io", headers)["token"]
         else
           @token ||= https_get("#{docker_registry}/v2/token", headers)["token"]
         end
@@ -79,7 +83,7 @@ module Spyglass
 
     def auth_header
       headers = {
-        "Authorization" => "Bearer: #{token}"
+        "Authorization" => "Bearer #{token}"
       }
       # if @username && @password
       #   headers = {
@@ -103,7 +107,9 @@ module Spyglass
 
     def get_blobs(manifest)
       config_digest = manifest["config"]["digest"]
-      https_get("#{docker_registry}/v2/#{docker_image}/blobs/#{config_digest}", auth_header)
+      # registry-1.docker.io will redirect to CDN location
+      r = @client.get_content("#{docker_registry}/v2/#{docker_image}/blobs/#{config_digest}", {}, auth_header)
+      JSON.parse(r)
     end
 
     def get_tags
