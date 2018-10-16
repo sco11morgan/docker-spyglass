@@ -11,6 +11,11 @@
   background-color: #f5c6cb;
 }
 
+.layer-CHOWN {
+  color: #000;
+  background-color: #f4a460;
+}
+
 .layer-ENV {
   color: #000;
   background-color: #856404;
@@ -31,33 +36,13 @@
   background-color: #acd4ff;
 }
 
-
-.list-group-item-ADD {
+.layer-USER {
   color: #000;
-  background-color: #d6d8db;
+  background-color: #8f8f8f;
 }
 
-.list-group-item-CMD {
+.layer-ENTRYPOINT {
   color: #000;
-  background-color: #f5c6cb;
+  background-color: #c6f5f0;
 }
 
-.list-group-item-ENV {
-  color: #000;
-  background-color: #856404;
-}
-
-.list-group-item-RUN {
-  color: #000;
-  background-color: #c3e6cb;
-}
-
-.list-group-item-COPY {
-  color: #000;
-  background-color: #c3e6cb;
-}
-
-.list-group-item-WORKDIR {
-  color: #000;
-  background-color: #acd4ff;
-}
