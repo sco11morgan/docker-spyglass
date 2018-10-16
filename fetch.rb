@@ -129,10 +129,23 @@ module Spyglass
           command["size"] = layer["size"]
           command["fake_id"] = layer["digest"]
         end
+        command["human_size"] = number_to_human_size(command["size"])
         command["created_by"] = command["created_by"].sub("/bin/sh -c #(nop)", "").sub("/bin/sh -c", "RUN").strip
         command["prefix"] = (command["created_by"] || "").split(" ").first
 
         command
+      end
+    end
+
+    def number_to_human_size(size)
+      if size < 1024
+        "#{size}B"
+      elsif size < 1024.0 * 1024.0
+        "%.01fKB" % (size / 1024.0)
+      elsif size < 1024.0 * 1024.0 * 1024.0
+        "%.01fMB" % (size / 1024.0 / 1024.0)
+      else
+        "%.01fGB" % (size / 1024.0 / 1024.0 / 1024.0)
       end
     end
 
@@ -160,8 +173,7 @@ end
 # end
  pp Spyglass::Fetch.new.tags
  # pp Spyglass::Fetch.new.get_most_recent_tags
-  # Spyglass::Fetch.new.trend
+   Spyglass::Fetch.new.trend
    # Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
 
-# Spyglass::Fetch.new.view("latest")
 # pp Spyglass::Fetch.new.view("latest")

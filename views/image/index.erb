@@ -1,7 +1,10 @@
 
-<ul class="list-group">
-  <% layer_mash.each do |layer| %>
-    <li class="list-group-item list-group-item-<%= layer['prefix'] %>"><%= layer['created_by'] %></li>
-  <% end %>
-</ul>
-
+<table class="table table-hover">
+    <% layer_mash.each do |layer| %>
+      <tr class="layer-<%= layer['prefix'] %>">
+        <td class="layer-<%= layer['prefix'] %>"><%= layer['prefix'] %></td>
+        <td><%= layer['created_by'] %></td>
+        <td align="right"><%= layer['human_size'] %></td>
+      </tr>
+    <% end %>
+</table>
