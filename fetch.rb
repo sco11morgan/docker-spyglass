@@ -77,26 +77,37 @@ module Spyglass
     #   puts e
     end
 
-    def score(tag1 = tags[1], tag2 = tags[0])
-      mashed = view(tag1)
-      image1_size = mashed.inject(0) {|sum, command| command["size"] + sum }
+    def score(tag1 = tags[1], tag2 = tags[0], include_details = false)
+      mashed1 = view(tag1)
+      image1_size = mashed1.inject(0) {|sum, command| command["size"] + sum }
+      pp "mashed1 #{mashed1.count}"
 
       mashed2 = view(tag2)
       image2_size = mashed2.inject(0) {|sum, command| command["size"] + sum }
 
-      diff = mashed2 - mashed
-      # pp diff
+      diff = mashed2.dup - mashed1.dup
       diff_size = diff.inject(0) {|sum, command| command["size"] + sum }
 
       result = {
         tag1: tag1,
         tag2: tag2,
+        image1_human_size: number_to_human_size(image1_size),
         image1_size: image1_size,
         image2_size: image2_size,
         gain: image2_size - image1_size,
         diff_size: diff_size,
-        percent_reuse: (100 - (diff_size.to_f / image2_size) * 100)
+        percent_reuse: (100 - (diff_size.to_f / image2_size) * 100).round(1)
       }
+      if include_details
+        shared = mashed1 - diff
+        result.merge!(
+          image1: mashed1,
+          image2: mashed2,
+          diff1: mashed1 - mashed2,
+          diff2: mashed2 - mashed1,
+          shared: mashed1 - (mashed1 - mashed2)
+        )
+      end
 
       pp result
       result
@@ -131,7 +142,7 @@ module Spyglass
         end
         command["human_size"] = number_to_human_size(command["size"])
         command["created_by"] = command["created_by"].sub("/bin/sh -c #(nop)", "").sub("/bin/sh -c", "RUN").strip
-        command["prefix"] = (command["created_by"] || "").split(" ").first
+        command["prefix"] = (command["created_by"] || "").split(" ").first.upcase
 
         command
       end
@@ -173,7 +184,8 @@ end
 # end
  pp Spyglass::Fetch.new.tags
  # pp Spyglass::Fetch.new.get_most_recent_tags
-   Spyglass::Fetch.new.trend
+   # Spyglass::Fetch.new.trend
    # Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
+   Spyglass::Fetch.new.score("d480128", "bffc975", true)
 
 # pp Spyglass::Fetch.new.view("latest")

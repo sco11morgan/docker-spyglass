@@ -1,0 +1,51 @@
+<div class="page-header">
+  <h3> <small><%= tag1 %> -> <%= tag2 %>, <%= image1_human_size %> Image </small></h3>
+  <h5> <%= percent_reuse %>% efficient (bytes reused between tags)</h5>
+</div>
+
+<table class="table">
+  <tr>
+    <td>
+    </td>
+    <td>
+      <table class="table table-hover">
+          <% shared.each do |layer| %>
+            <tr class="layer-<%= layer['prefix'] %>">
+              <td class="layer-<%= layer['prefix'] %>"><%= layer['prefix'] %></td>
+              <td><%= layer['created_by'] %></td>
+              <td align="right"><%= layer['human_size'] %></td>
+            </tr>
+          <% end %>
+      </table>    
+    </td>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <table class="table table-hover">
+          <% diff1.each do |layer| %>
+            <tr class="layer-<%= layer['prefix'] %>">
+              <td class="layer-<%= layer['prefix'] %>"><%= layer['prefix'] %></td>
+              <td><%= layer['created_by'] %></td>
+              <td align="right"><%= layer['human_size'] %></td>
+            </tr>
+          <% end %>
+      </table>    
+    </td>
+    <td>
+    </td>
+    <td>
+      <table class="table table-hover">
+          <% diff2.each do |layer| %>
+            <tr class="layer-<%= layer['prefix'] %>">
+              <td class="layer-<%= layer['prefix'] %>"><%= layer['prefix'] %></td>
+              <td><%= layer['created_by'] %></td>
+              <td align="right"><%= layer['human_size'] %></td>
+            </tr>
+          <% end %>
+      </table>    
+    </td>
+  </tr>
+
+</table>

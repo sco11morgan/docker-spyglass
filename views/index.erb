@@ -1,6 +1,6 @@
 
 <div class="row text-white">
-<div class="col-sm-5 offset-sm-4 text-center">
+<div class="col-sm-8 offset-sm-2 text-center">
 
 <form action='/image' method='get' class="form-inline justify-content-center p-5">
   <div class="form-row align-items-center">
@@ -9,7 +9,23 @@
       <input type="text" name='image' placeholder="Image" id="imageFormInput" autofocus required>
     </div>
     <div class="col-auto">
-      <input class="btn btn-primary" type='submit' value='view image'>
+      <input class="btn btn-primary" type='submit' value='View Latest'>
+    </div>
+  </div>
+</form>
+
+<form action='/compare' method='get' class="form-inline justify-content-center p-5">
+  <div class="form-row align-items-center">
+    <div class="col-auto">
+      <label class="sr-only" for="imageFormInput">Image</label>
+      <input type="text" name='image' placeholder="Image" id="imageFormInput" autofocus required>
+      <label class="sr-only" for="imageFormInput">Tag 1</label>
+      <input type="text" name='tag1' placeholder="Tag 1" id="imageFormInput" autofocus required>
+      <label class="sr-only" for="imageFormInput">Tag 2</label>
+      <input type="text" name='tag2' placeholder="Tag 2" id="imageFormInput" autofocus required>
+    </div>
+    <div class="col-auto">
+      <input class="btn btn-primary" type='submit' value='Compare'>
     </div>
   </div>
 </form>
