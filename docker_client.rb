@@ -23,7 +23,7 @@ module Spyglass
 
     def initialize(args = {})
       @client = HTTPClient.new
-      @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY'] || "https://docker-dev.groupondev.com"
+      @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY'] || "https://docker-conveyor.groupondev.com"
       @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE'] || "janus/visitsbycountry" || "ie/titan"
       @username = args[:username] || ENV['DOCKER_USERNAME'] 
       @password = args[:password] || ENV['DOCKER_PASSWORD'] 

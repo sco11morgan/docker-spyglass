@@ -2,9 +2,13 @@
 <table class="table table-hover">
     <% layer_mash.each do |layer| %>
       <tr class="layer-<%= layer['prefix'] %>">
-        <td class="layer-<%= layer['prefix'] %>"><%= layer['prefix'] %></td>
-        <td><%= layer['created_by'] %></td>
+        <td data-trigger="hover" data-toggle="popover" >
+          <%= layer['created_by'][0..50] %>
+        </td>
+        <td class="d-none"><%= layer['created_by'] %></td>
+        <td><small><%= layer['created'][0..20] %></small></td>
         <td align="right"><%= layer['human_size'] %></td>
+        <td><span class="bullet"><%= layer['size'] %>,<%= layer['max'] %></span></td>
       </tr>
     <% end %>
 </table>

@@ -146,6 +146,13 @@ module Spyglass
 
         command
       end
+
+      max = commands.max_by { |command| command["size"] }["size"]
+      commands.each do |command|
+        command["max"] = max
+      end
+
+      commands
     end
 
     def number_to_human_size(size)
