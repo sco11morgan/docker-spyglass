@@ -51,10 +51,20 @@ module Spyglass
     end
 
     def view(tag = nil)
+      tag = tag || tags.last
       pp "==================== fetching tag: #{tag}"
       manifest = docker_client.get_manifest(tag || tags.last)
       blobs = docker_client.get_blobs(manifest)
-      mash(manifest, blobs)
+      layers = mash(manifest, blobs)
+      image_size = layers.inject(0) {|sum, command| command["size"] + sum }
+
+
+      {
+        tag: tag,
+        layers: layers,
+        image_size: image_size,
+        image_human_size: number_to_human_size(image_size)
+      }
     end
 
     def diff
@@ -79,33 +89,35 @@ module Spyglass
 
     def score(tag1 = tags[1], tag2 = tags[0], include_details = false)
       mashed1 = view(tag1)
-      image1_size = mashed1.inject(0) {|sum, command| command["size"] + sum }
-      pp "mashed1 #{mashed1.count}"
+      image1_size = mashed1[:image_size]
 
       mashed2 = view(tag2)
-      image2_size = mashed2.inject(0) {|sum, command| command["size"] + sum }
+      image2_size = mashed2[:image_size]
 
-      diff = mashed2.dup - mashed1.dup
+      layers1 = mashed1[:layers]
+      layers2 = mashed2[:layers]
+
+      diff = layers2.dup - layers1.dup
       diff_size = diff.inject(0) {|sum, command| command["size"] + sum }
 
       result = {
         tag1: tag1,
         tag2: tag2,
-        image1_human_size: number_to_human_size(image1_size),
-        image1_size: image1_size,
-        image2_size: image2_size,
-        gain: image2_size - image1_size,
+        image1_human_size: mashed1[:image_human_size],
+        image1_size: mashed1[:image_size],
+        image2_size: mashed2[:image_size],
+        gain: mashed2[:image_size] - mashed1[:image_size],
         diff_size: diff_size,
         percent_reuse: (100 - (diff_size.to_f / image2_size) * 100).round(1)
       }
       if include_details
-        shared = mashed1 - diff
+        shared = layers1 - diff
         result.merge!(
-          image1: mashed1,
-          image2: mashed2,
-          diff1: mashed1 - mashed2,
-          diff2: mashed2 - mashed1,
-          shared: mashed1 - (mashed1 - mashed2)
+          image1: layers1,
+          image2: layers2,
+          diff1: layers1 - layers2,
+          diff2: layers2 - layers1,
+          shared: layers1 - (layers1 - layers2)
         )
       end
 
@@ -169,7 +181,7 @@ module Spyglass
 
     def get_most_recent_tags(size = 3)
       tag_map = tags.map do |tag|
-        timestamp = Cache.get("timestamp-#{tag}") do
+        timestamp = Cache.get("timestamp-#{docker_client.docker_image}-#{tag}") do
           docker_client.get_tag_timestamp(tag)
         end
 
@@ -190,7 +202,7 @@ end
 #   pp e
 # end
  pp Spyglass::Fetch.new.tags
- # pp Spyglass::Fetch.new.get_most_recent_tags
+  pp Spyglass::Fetch.new.get_most_recent_tags
    # Spyglass::Fetch.new.trend
    # Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
    Spyglass::Fetch.new.score("d480128", "bffc975", true)

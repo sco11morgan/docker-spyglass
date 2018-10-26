@@ -1,12 +1,16 @@
 module Spyglass
   class Cache
-    @redis = {}
+
+    def self.redis
+      @@redis ||= {}
+    end
+
     def self.get(key, &block)
-      if @redis.key?(key)
-        @redis[key]
+      if redis.key?(key)
+        redis[key]
       else
         if block_given?
-          @redis[key] = yield(block)
+          redis[key] = yield(block)
         end
       end
     end  
