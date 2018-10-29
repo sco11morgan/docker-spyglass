@@ -58,10 +58,13 @@ module Spyglass
       layers = mash(manifest, blobs)
       image_size = layers.inject(0) {|sum, command| command["size"] + sum }
 
+      max = layers.max_by { |layer| layer["size"] }["size"]
 
       {
         tag: tag,
+        created: layers.last["created"],
         layers: layers,
+        max: max,
         image_size: image_size,
         image_human_size: number_to_human_size(image_size)
       }
@@ -87,7 +90,8 @@ module Spyglass
     #   puts e
     end
 
-    def score(tag1 = tags[1], tag2 = tags[0], include_details = false)
+    def compare(tag1 = tags[1], tag2 = tags[0], include_details = false)
+      pp "==================== compare"
       mashed1 = view(tag1)
       image1_size = mashed1[:image_size]
 
@@ -103,6 +107,8 @@ module Spyglass
       result = {
         tag1: tag1,
         tag2: tag2,
+        tag1_created: mashed1[:created],
+        tag2_created: mashed2[:created],
         image1_human_size: mashed1[:image_human_size],
         image1_size: mashed1[:image_size],
         image2_size: mashed2[:image_size],
@@ -117,7 +123,8 @@ module Spyglass
           image2: layers2,
           diff1: layers1 - layers2,
           diff2: layers2 - layers1,
-          shared: layers1 - (layers1 - layers2)
+          shared: layers1 - (layers1 - layers2),
+          max: [mashed1[:max], mashed2[:max]].max
         )
       end
 
@@ -125,8 +132,16 @@ module Spyglass
       result
     end
 
+    def score(tag1, tag2)
+      score = Cache.get("score-#{docker_client.docker_image}-#{tag1}-#{tag2}") do
+        compare = compare(tag1, tag2)
+        compare
+      end
+    end
+
     def trend
-      get_most_recent_tags(5).each_cons(2) do |tag1, tag2|
+      get_most_recent_tags(5).each_cons(2).map do |e|
+        tag1, tag2 = e[0], e[1]
         score(tag1, tag2)
       end
       # tags.first(5).each_cons(2) do |tag1, tag2|
@@ -159,11 +174,6 @@ module Spyglass
         command
       end
 
-      max = commands.max_by { |command| command["size"] }["size"]
-      commands.each do |command|
-        command["max"] = max
-      end
-
       commands
     end
 
@@ -193,18 +203,10 @@ module Spyglass
 
   end
 end
- # Spyglass::Fetch.new.score("2018.10.08-17.15.39-73b3b46", "2018.10.08-18.44.21-0dc52a4")
- # Spyglass::Fetch.new.score
-  # Spyglass::Fetch.new.docker_client.token
-#  begin
-#   Spyglass::Fetch.new.docker_client.token
-#  rescue => e
-#   pp e
-# end
- pp Spyglass::Fetch.new.tags
-  pp Spyglass::Fetch.new.get_most_recent_tags
-   # Spyglass::Fetch.new.trend
-   # Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
-   Spyglass::Fetch.new.score("d480128", "bffc975", true)
 
-# pp Spyglass::Fetch.new.view("latest")
+pp Spyglass::Fetch.new.tags
+pp Spyglass::Fetch.new.get_most_recent_tags
+# Spyglass::Fetch.new.trend
+# Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
+Spyglass::Fetch.new.compare("d480128", "bffc975", true)
+

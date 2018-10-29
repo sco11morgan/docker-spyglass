@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <title>Spyglass</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="//stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
+
+
+    <script src="//code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+
+
+    <link href="/css/layer.css" rel="stylesheet">
+    <script src="js/layer.js"></script>
+
+    <script type="text/javascript">
+      $(function() {
+        /** This code runs when everything has been loaded on the page */
+
+
+Chart.plugins.register({
+  onEvent: function(chartInstance, chartEvent) {
+    var xAxis = chartInstance.scales['x-axis-0'];
+
+    // If mouse is over the legend, change cursor style to pointer, else don't show it
+    var x = chartEvent.x;
+    var y = chartEvent.y;
+
+    if (chartEvent.type === 'click' &&
+      x <= xAxis.right && x >= xAxis.left &&
+      y <= xAxis.bottom && y >= xAxis.top) {
+      // category scale returns index here for some reason
+      var index = xAxis.getValueForPixel(x);
+      console.log(chartInstance.data.labels[index]);
+      document.getElementById('tick').innerHTML = chartInstance.data.labels[index];
+    }
+  }
+});
+
+
+        var colors = ['#97bbcd','#28a745']
+
+var ctx = document.getElementById("chLine");
+if (chLine) {
+var mixedChart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    datasets: [{
+          label: 'Percent Reuse',
+          data: <%= percent_reuse %>,
+          backgroundColor: colors[0],
+          borderColor: colors[0],
+          yAxisID: "y-axis-0",
+          pointRadius: 5,
+          fill: false,
+          type: 'line',
+        },
+         {
+          label: 'Image Size',
+          data: <%= size %>,
+          yAxisID: "y-axis-1",
+          // borderColor: colors[1],
+          type: 'bar'
+        }],
+    labels: <%= tags %>,
+  },
+  options: {
+    tooltips: {
+      mode: 'index',
+      // intersect: true,
+      callbacks: {
+        label: function(tooltipItem, data) {
+          var label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+          if (label) {
+              label += ': ';
+          }
+          label += Math.round(tooltipItem.yLabel * 100) / 100;
+          return label;        
+        }
+      }      
+    },
+    scales: {
+       xAxes: [{
+        display: true,
+        scaleLabel: {
+          display: true,
+        }
+      }],
+      // xAxes: [{
+      //   ticks: {
+      //       // Include a dollar sign in the ticks
+      //       callback: function(value, index, values) {
+      //           return '$' + value;
+      //       }
+      //   }
+      // }],      
+      yAxes: [{
+        position: "left",
+        id: "y-axis-0",
+        ticks: {
+          max: 100,
+          min: 0
+        }
+      }, {
+        position: "right",
+        id: "y-axis-1",
+        gridLines: {
+          drawOnChartArea: false, // only want the grid lines for one axis to show up
+        },
+        ticks: {
+          callback: function(label, index, labels) {
+              return label/1000000+'M';
+          }
+        },
+        // scaleLabel: {
+        //     display: true,
+        //     labelString: '1k = 1000'
+        // },
+        // ticks: {
+        //   max: 1000000000,
+        //   min: 0
+        // }
+      }]
+    },
+    legend: { position: 'bottom' }
+  }
+});
+
+}
+
+      });
+    </script>
+
+  </head>
+  <body>
+     <nav class="navbar navbar-expand navbar-dark bg-dark">
+      <a class="navbar-brand" href="/">Spyglass</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">View</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Compare</a>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-center">
+          <li class="nav-item">
+            <a class="nav-link" href="#"><%=image%></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container-fluid">
+      <div>
+        <%if @error then %>
+            <div class="alert alert-error"><%=@error%></div>
+        <% end %>
+        <div class="container">
+          <div class="row">
+             &nbsp;
+          </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <canvas id="chLine"></canvas>
+                        </div>
+                    </div>
+                </div>
+             </div>     
+        </div>
+      </div>
+    </div>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.bundle.min.js" integrity="sha384-pjaaA8dDz/5BgdFUPX6M/9SUZv4d12SUPF0axWc+VRZkx5xU3daN+lYb49+Ax+Tl" crossorigin="anonymous"></script>
+  </body>
+</html>
