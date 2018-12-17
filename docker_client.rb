@@ -1,8 +1,14 @@
 
 require 'date'
 require 'httpclient'
+require 'httplog'
 require 'json'
 require 'pp'
+
+HttpLog.configure do |config|
+  config.color = :red
+  config.compact_log = true
+end
 
 module Spyglass
 
@@ -23,8 +29,8 @@ module Spyglass
 
     def initialize(args = {})
       @client = HTTPClient.new
-      @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY'] || "https://docker-conveyor.groupondev.com"
-      @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE'] || "janus/visitsbycountry" || "ie/titan"
+      @docker_registry = args[:docker_registry] || ENV['DOCKER_REGISTRY']
+      @docker_image = args[:docker_image] || ENV['DOCKER_IMAGE']
       @username = args[:username] || ENV['DOCKER_USERNAME'] 
       @password = args[:password] || ENV['DOCKER_PASSWORD'] 
       pp docker_image
