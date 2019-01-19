@@ -51,9 +51,9 @@ module Spyglass
     end
 
     def view(tag = nil)
-      tag = tag || tags.last
+      tag = tag || get_most_recent_tags(1).last
       pp "==================== fetching tag: #{tag}"
-      manifest = docker_client.get_manifest(tag || tags.last)
+      manifest = docker_client.get_manifest(tag)
       blobs = docker_client.get_blobs(manifest)
       layers = mash(manifest, blobs)
       image_size = layers.inject(0) {|sum, command| command["size"] + sum }
@@ -204,9 +204,9 @@ module Spyglass
   end
 end
 
-pp Spyglass::Fetch.new.tags
-pp Spyglass::Fetch.new.get_most_recent_tags
-# Spyglass::Fetch.new.trend
-# Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
-Spyglass::Fetch.new.compare("d480128", "bffc975", true)
+# pp Spyglass::Fetch.new.tags
+# pp Spyglass::Fetch.new.get_most_recent_tags
+# # Spyglass::Fetch.new.trend
+# # Spyglass::Fetch.new.score("2018.10.05-21.18.04-e02cc68", "2ded8dfe31f4307d65b9f6568cd405ec-e02cc68")
+# Spyglass::Fetch.new.compare("d480128", "bffc975", true)
 

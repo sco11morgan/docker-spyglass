@@ -41,7 +41,7 @@ module Spyglass
 
     def check_args
       raise "missing DOCKER_REGISTRY" if docker_registry.nil?
-      raise "missing docker_image" if docker_image.nil?
+      # raise "missing docker_image" if docker_image.nil?
     end
 
     def https_get(url, headers = {})
@@ -112,6 +112,7 @@ module Spyglass
     end
 
     def get_blobs(manifest)
+      raise "only v2 images are supported" if manifest["schemaVersion"] != 2
       config_digest = manifest["config"]["digest"]
       # registry-1.docker.io will redirect to CDN location
       r = @client.get_content("#{docker_registry}/v2/#{docker_image}/blobs/#{config_digest}", {}, auth_header)
